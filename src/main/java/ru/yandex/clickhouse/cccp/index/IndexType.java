@@ -7,10 +7,16 @@ package ru.yandex.clickhouse.cccp.index;
  */
 public interface IndexType <T> {
 
+    Class<T> getClazz();
+
     String getID();
 
     long toBound(T bound);
 
     T fromBound(long bound);
+
+    long maxValue();
+
+    long minValue();
 
 }

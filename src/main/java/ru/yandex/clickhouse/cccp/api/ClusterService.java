@@ -1,6 +1,7 @@
 package ru.yandex.clickhouse.cccp.api;
 
 import ru.yandex.clickhouse.cccp.cluster.Region;
+import ru.yandex.clickhouse.cccp.index.IndexConfig;
 
 import java.util.List;
 
@@ -9,10 +10,18 @@ import java.util.List;
  */
 public interface ClusterService {
 
-    // list of tablets
+    // list of regions
     List<Region> getRegions();
 
-    // create some tablet for new index range
+    // get region for index
+    Region getRegion(List<Object> index);
+
+    // get index config
+    IndexConfig getIndexConfig();
+
+    // hosts for regionID
+    // todo should not be here, take it from ZK and subscribe as writer
+    List<String> getHosts(int regionID);
 
 
 }

@@ -9,6 +9,10 @@ import java.util.List;
 public class IndexConfig {
     private List<IndexType<?>> types;
 
+    public IndexConfig(List<IndexType<?>> types) {
+        this.types = types;
+    }
+
     public List<IndexType<?>> getTypes() {
         return types;
     }

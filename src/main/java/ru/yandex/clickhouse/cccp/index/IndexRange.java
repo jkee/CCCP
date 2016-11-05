@@ -1,10 +1,11 @@
 package ru.yandex.clickhouse.cccp.index;
 
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.Ints;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedLongs;
 
-import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Index range for one region or other purposes
@@ -21,26 +22,44 @@ import java.util.Arrays;
 public class IndexRange {
 
     // including
-    private final int[] upperBounds;
+    private final long[] upperBounds;
 
     // not including
-    private final int[] lowerBounds;
+    private final long[] lowerBounds;
 
-    public IndexRange(int[] upperBounds, int[] lowerBounds) {
-        Preconditions.checkArgument(upperBounds.length != lowerBounds.length, "Bounds length mismatch");
+    public IndexRange(long[] upperBounds, long[] lowerBounds) {
+        Preconditions.checkArgument(upperBounds.length == lowerBounds.length, "Bounds length mismatch");
         for (int i = 0; i < upperBounds.length; i++) {
-            Preconditions.checkArgument(upperBounds[i] <= lowerBounds[i], "Upper bound should be higher than lower bound");
+            Preconditions.checkArgument(UnsignedLongs.compare(upperBounds[i], lowerBounds[i]) < 0, "Upper bound should be higher than lower bound");
         }
         this.upperBounds = upperBounds;
         this.lowerBounds = lowerBounds;
     }
 
-    public int[] getUpperBounds() {
+    public long[] getUpperBounds() {
         return upperBounds;
     }
 
-    public int[] getLowerBounds() {
+    public long[] getLowerBounds() {
         return lowerBounds;
+    }
+
+    public List<Object> getUpperBoundsExternal(IndexConfig config) {
+        return toExternal(config, lowerBounds);
+    }
+
+    public List<Object> getLowerBoundsExternal(IndexConfig config) {
+        return toExternal(config, upperBounds);
+    }
+
+    private List<Object> toExternal(IndexConfig config, long[] lowerBounds) {
+        List<Object> objects = Lists.newArrayListWithCapacity(lowerBounds.length);
+        for (int i = 0; i < lowerBounds.length; i++) {
+            IndexType<?> indexType = config.getTypes().get(i);
+            Object o = indexType.fromBound(lowerBounds[i]);
+            objects.add(o);
+        }
+        return objects;
     }
 
     @Override

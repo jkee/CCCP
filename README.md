@@ -26,3 +26,27 @@ metrika.hits_42
 metrika.visits_42
 
 
+# Data distribution and region split
+
+Index (complex or not) can be imagined as one axis.
+One region is an interval on that axis. All regions cover up full axis range.
+
+When region become large enough to split:
+1. Select index median from real data
+2. Create two (?) new regions. First is [left_bound, median) and second is [median, right_bound)
+
+
+# What's wrong with external implementation
+
+ - Index split should be made on client.
+
+
+
+
+TODO
+regionid -> long
+client should not build table name
+
+lower, upper -> left, right
+
+

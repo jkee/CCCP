@@ -44,8 +44,7 @@ public class CHNodeConnectionTest {
         connection = new CHNodeConnection("jkee.org", 8123, properties);
         dbConnection = connection.getConnection();
 
-        config = new IndexConfig();
-        config.setTypes(Lists.newArrayList(
+        config = new IndexConfig(Lists.newArrayList(
                 IndexTypes.MONTH, IndexTypes.UInt64
         ));
 

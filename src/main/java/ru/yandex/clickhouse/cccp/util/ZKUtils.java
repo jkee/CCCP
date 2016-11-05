@@ -9,7 +9,7 @@ import org.apache.zookeeper.data.Stat;
 /**
  * Created by Jkee on 29.10.2016.
  */
-public class ZKUtil {
+public class ZKUtils {
 
     public static void createIfNotExists(ZooKeeper zk, String path) {
         try {

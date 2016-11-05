@@ -8,10 +8,14 @@ import org.apache.zookeeper.ZooKeeper;
 import ru.yandex.clickhouse.cccp.cluster.ClusterConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.cluster.Region;
+import ru.yandex.clickhouse.cccp.index.IndexConfig;
+import ru.yandex.clickhouse.cccp.index.IndexType;
+import ru.yandex.clickhouse.cccp.index.IndexTypes;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Zookeeper realization of cluster db service, the only one
@@ -40,6 +44,7 @@ public class ZKClusterDBService implements ClusterDBService {
     public ClusterConfiguration loadConfiguration() {
 
         String paramsPath = '/' + clusterName + "/configuration/parameters";
+        String indexPath = '/' + clusterName + "/configuration/index";
         String nodesPath = '/' + clusterName + "/configuration/nodes";
 
         ClusterConfiguration configuration = new ClusterConfiguration();
@@ -55,6 +60,11 @@ public class ZKClusterDBService implements ClusterDBService {
             byte[] nodesJson = zk.getData(nodesPath, false, null);
             Set<ClusterNode> nodes = mapper.readValue(nodesJson, new TypeReference<Set<ClusterNode>>() { });
             configuration.setNodes(nodes);
+
+            byte[] typesJson = zk.getData(indexPath, false, null);
+            List<String> typesString = mapper.readValue(typesJson, new TypeReference<List<String>>() {});
+            List<IndexType<?>> types = typesString.stream().map(IndexTypes::fromID).collect(Collectors.toList());
+            configuration.setConfig(new IndexConfig(types));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -66,25 +76,32 @@ public class ZKClusterDBService implements ClusterDBService {
     public void setConfiguration(ClusterConfiguration configuration) {
         Preconditions.checkArgument(configuration.getClusterName().equals(clusterName), "Cluster name mismatch");
         try {
-            ZKUtil.createIfNotExists(zk, '/' + clusterName);
-            ZKUtil.createIfNotExists(zk, '/' + clusterName + "/configuration");
+            ZKUtils.createIfNotExists(zk, '/' + clusterName);
+            ZKUtils.createIfNotExists(zk, '/' + clusterName + "/configuration");
 
             String paramsPath = '/' + clusterName + "/configuration/parameters";
+            String indexPath = '/' + clusterName + "/configuration/index";
             String nodesPath = '/' + clusterName + "/configuration/nodes";
 
-            ZKUtil.createIfNotExists(zk, paramsPath);
-            ZKUtil.createIfNotExists(zk, nodesPath);
+            ZKUtils.createIfNotExists(zk, paramsPath);
+            ZKUtils.createIfNotExists(zk, indexPath);
+            ZKUtils.createIfNotExists(zk, nodesPath);
 
-            ZKUtil.createIfNotExists(zk, paramsPath + "/replicationFactor");
-            ZKUtil.createIfNotExists(zk, paramsPath + "/maxTabletSize");
+            ZKUtils.createIfNotExists(zk, paramsPath + "/replicationFactor");
+            ZKUtils.createIfNotExists(zk, paramsPath + "/maxTabletSize");
 
             byte[] nodesJson = mapper.writeValueAsBytes(configuration.getNodes());
+            List<String> types = configuration.getConfig().getTypes().stream()
+                    .map(IndexType::getID)
+                    .collect(Collectors.toList());
+            byte[] typesJson = mapper.writeValueAsBytes(types);
 
             Transaction transaction = zk.transaction();
 
             transaction.setData(paramsPath + "/replicationFactor", String.valueOf(configuration.getReplicationFactor()).getBytes(), -1);
             transaction.setData(paramsPath + "/maxTabletSize", String.valueOf(configuration.getMaxTabletSize()).getBytes(), -1);
 
+            transaction.setData(indexPath, typesJson, -1);
             transaction.setData(nodesPath, nodesJson, -1);
 
             transaction.commit();
