@@ -12,6 +12,9 @@ import java.util.List;
  */
 public class Region {
 
+    // unique region id for dataset
+    private int regionID;
+
     // nodes data is placed on
     private List<ClusterNode> activeNodes;
 
@@ -19,9 +22,10 @@ public class Region {
     // index range can't be changed
     private IndexRange indexRange;
 
-    public Region(List<ClusterNode> activeNodes, IndexRange indexRange) {
+    public Region(int regionID, List<ClusterNode> activeNodes, IndexRange indexRange) {
         Preconditions.checkNotNull(activeNodes);
         Preconditions.checkNotNull(indexRange);
+        this.regionID = regionID;
         this.activeNodes = activeNodes;
         this.indexRange = indexRange;
     }
@@ -32,5 +36,9 @@ public class Region {
 
     public IndexRange getIndexRange() {
         return indexRange;
+    }
+
+    public int getRegionID() {
+        return regionID;
     }
 }
