@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.*;
 import org.junit.Assert;
 import org.junit.Test;
-import ru.yandex.clickhouse.cccp.cluster.ClusterConfiguration;
+import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexTypes;
@@ -17,9 +17,9 @@ import ru.yandex.clickhouse.cccp.index.IndexTypes;
  * Require zookeeper
  * Created by Jkee on 31.10.2016.
  */
-public class ZKClusterDBServiceTest {
+public class ZKDatasetDBServiceTest {
 
-    static final Logger logger = Logger.getLogger(ZKClusterDBServiceTest.class);
+    static final Logger logger = Logger.getLogger(ZKDatasetDBServiceTest.class);
 
     private ZooKeeper zk;
 
@@ -28,13 +28,17 @@ public class ZKClusterDBServiceTest {
 
         BasicConfigurator.configure();
 
+        String clusterName = "fruits";
+        String datasetName = "ananas";
+
         zk = new ZooKeeper("jkee.org:2181",500, null);
-        if (zk.exists("/ananas", false) != null) {
-            ZKUtil.deleteRecursive(zk, "/ananas");
+        if (zk.exists("/" + clusterName, false) != null) {
+            ZKUtil.deleteRecursive(zk, "/" + clusterName);
         }
 
-        ClusterConfiguration configuration = new ClusterConfiguration();
-        configuration.setClusterName("ananas");
+        DatasetConfiguration configuration = new DatasetConfiguration();
+        configuration.setClusterName(clusterName);
+        configuration.setDatasetName(datasetName);
         configuration.setReplicationFactor(3);
         configuration.setMaxTabletSize(100 * 1024); // 100 gb
         configuration.setNodes(Sets.newHashSet(
@@ -55,12 +59,13 @@ public class ZKClusterDBServiceTest {
         ));
         configuration.setConfig(config);
 
-        ZKClusterDBService clusterDBService = new ZKClusterDBService("jkee.org", 2181, "ananas");
+        ZKClusterDBService clusterDBService = new ZKClusterDBService("jkee.org", 2181, clusterName);
 
         clusterDBService.setConfiguration(configuration);
-        ClusterConfiguration loaded = clusterDBService.loadConfiguration();
+        DatasetConfiguration loaded = clusterDBService.loadConfiguration(datasetName);
 
         Assert.assertEquals(configuration.getClusterName(), loaded.getClusterName());
+        Assert.assertEquals(configuration.getDatasetName(), loaded.getDatasetName());
         Assert.assertEquals(configuration.getMaxTabletSize(), loaded.getMaxTabletSize());
         Assert.assertEquals(configuration.getReplicationFactor(), loaded.getReplicationFactor());
         Assert.assertEquals(configuration.getNodes(), loaded.getNodes());
@@ -75,9 +80,10 @@ public class ZKClusterDBServiceTest {
         ));
 
         clusterDBService.setConfiguration(configuration);
-        loaded = clusterDBService.loadConfiguration();
+        loaded = clusterDBService.loadConfiguration(datasetName);
 
         Assert.assertEquals(configuration.getClusterName(), loaded.getClusterName());
+        Assert.assertEquals(configuration.getDatasetName(), loaded.getDatasetName());
         Assert.assertEquals(configuration.getMaxTabletSize(), loaded.getMaxTabletSize());
         Assert.assertEquals(configuration.getReplicationFactor(), loaded.getReplicationFactor());
         Assert.assertEquals(configuration.getNodes(), loaded.getNodes());

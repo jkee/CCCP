@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.zookeeper.ZooKeeper;
-import ru.yandex.clickhouse.cccp.api.ClusterService;
+import ru.yandex.clickhouse.cccp.api.DatasetService;
 import ru.yandex.clickhouse.cccp.cluster.Region;
 import ru.yandex.clickhouse.cccp.index.IndexRange;
 import ru.yandex.clickhouse.cccp.util.CHNodeConnection;
@@ -46,7 +46,7 @@ import java.util.Random;
 public class ClusterClient {
 
     private ZooKeeper zk;
-    private ClusterService clusterService;
+    private DatasetService datasetService;
 
     String dataset;
     String table;
@@ -62,8 +62,8 @@ public class ClusterClient {
 
     private List<HitIndexRange> indexes = Lists.newArrayList();
 
-    public ClusterClient(String host, int port, ClusterService clusterService) {
-        this.clusterService = clusterService;
+    public ClusterClient(String host, int port, DatasetService datasetService) {
+        this.datasetService = datasetService;
         try {
             // no listener for now
             zk = new ZooKeeper(host + ':' + port, 500, event -> {
@@ -100,14 +100,14 @@ public class ClusterClient {
         Region region = requestRegion(index);
         IndexRange indexRange = region.getIndexRange();
 
-        List<Object> lowerBoundsExternal = indexRange.getLowerBoundsExternal(clusterService.getIndexConfig());
+        List<Object> lowerBoundsExternal = indexRange.getLowerBoundsExternal(datasetService.getIndexConfig());
         TestHitIndex lower = new TestHitIndex(
                 (LocalDate) lowerBoundsExternal.get(0),
                 (Integer) lowerBoundsExternal.get(1),
                 (Long) lowerBoundsExternal.get(2)
         );
 
-        List<Object> upperBoundsExternal = indexRange.getUpperBoundsExternal(clusterService.getIndexConfig());
+        List<Object> upperBoundsExternal = indexRange.getUpperBoundsExternal(datasetService.getIndexConfig());
         TestHitIndex upper = new TestHitIndex(
                 (LocalDate) upperBoundsExternal.get(0),
                 (Integer) upperBoundsExternal.get(1),
@@ -130,11 +130,11 @@ public class ClusterClient {
         objectIndex.add(index.getEventMonth());
         objectIndex.add(index.getIndexPrefix());
         objectIndex.add(index.getUserIDHash());
-        return clusterService.getRegion(objectIndex);
+        return datasetService.getRegion(objectIndex);
     }
 
     private List<String> requestRegionHosts(int regionID) {
-        return clusterService.getHosts(regionID);
+        return datasetService.getHosts(regionID);
     }
 
     private Multimap<Integer, TestHit> splitDataByIndex(List<TestHit> hits) {

@@ -1,6 +1,6 @@
 package ru.yandex.clickhouse.cccp.util;
 
-import ru.yandex.clickhouse.cccp.cluster.ClusterConfiguration;
+import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.Region;
 
 import java.util.List;
@@ -14,17 +14,17 @@ public interface ClusterDBService {
     /**
      * Set configuration
      */
-    void setConfiguration(ClusterConfiguration configuration);
+    void setConfiguration(DatasetConfiguration configuration);
 
     /**
      * Loads cluster configuration
      */
-    ClusterConfiguration loadConfiguration();
+    DatasetConfiguration loadConfiguration(String datasetName);
 
     /**
      * Loads all current regions configuration from database
      */
-    List<Region> loadRegions();
+    List<Region> loadRegions(String datasetName);
 
     /**
      * Updates current region with new nodes info

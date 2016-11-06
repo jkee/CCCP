@@ -8,10 +8,12 @@ import java.util.Set;
  * Hardware configuration and parameters
  * Created by Jkee on 29.10.2016.
  */
-public class ClusterConfiguration {
+public class DatasetConfiguration {
 
     // unique cluster name string
     private String clusterName;
+
+    private String datasetName;
 
     // only Metrica cluster configuration for now
     // simplified for one layer
@@ -35,6 +37,14 @@ public class ClusterConfiguration {
 
     public void setClusterName(String clusterName) {
         this.clusterName = clusterName;
+    }
+
+    public String getDatasetName() {
+        return datasetName;
+    }
+
+    public void setDatasetName(String datasetName) {
+        this.datasetName = datasetName;
     }
 
     public Set<ClusterNode> getNodes() {

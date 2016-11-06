@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import org.apache.zookeeper.Transaction;
 import org.apache.zookeeper.ZooKeeper;
-import ru.yandex.clickhouse.cccp.cluster.ClusterConfiguration;
+import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.cluster.Region;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
@@ -41,14 +41,15 @@ public class ZKClusterDBService implements ClusterDBService {
     }
 
     @Override
-    public ClusterConfiguration loadConfiguration() {
+    public DatasetConfiguration loadConfiguration(String datasetName) {
 
-        String paramsPath = '/' + clusterName + "/configuration/parameters";
-        String indexPath = '/' + clusterName + "/configuration/index";
-        String nodesPath = '/' + clusterName + "/configuration/nodes";
+        String paramsPath = '/' + clusterName + '/' + datasetName + "/configuration/parameters";
+        String indexPath = '/' + clusterName + '/' + datasetName + "/configuration/index";
+        String nodesPath = '/' + clusterName + '/' + datasetName + "/configuration/nodes";
 
-        ClusterConfiguration configuration = new ClusterConfiguration();
+        DatasetConfiguration configuration = new DatasetConfiguration();
         configuration.setClusterName(clusterName);
+        configuration.setDatasetName(datasetName);
 
         try {
             byte[] replicationFactorBytes = zk.getData(paramsPath + "/replicationFactor", false, null);
@@ -73,15 +74,17 @@ public class ZKClusterDBService implements ClusterDBService {
     }
 
     @Override
-    public void setConfiguration(ClusterConfiguration configuration) {
+    public void setConfiguration(DatasetConfiguration configuration) {
         Preconditions.checkArgument(configuration.getClusterName().equals(clusterName), "Cluster name mismatch");
         try {
+            String datasetName = configuration.getDatasetName();
             ZKUtils.createIfNotExists(zk, '/' + clusterName);
-            ZKUtils.createIfNotExists(zk, '/' + clusterName + "/configuration");
+            ZKUtils.createIfNotExists(zk, '/' + clusterName + '/' + datasetName);
+            ZKUtils.createIfNotExists(zk, '/' + clusterName + '/' + datasetName + "/configuration");
 
-            String paramsPath = '/' + clusterName + "/configuration/parameters";
-            String indexPath = '/' + clusterName + "/configuration/index";
-            String nodesPath = '/' + clusterName + "/configuration/nodes";
+            String paramsPath = '/' + clusterName + '/' + datasetName + "/configuration/parameters";
+            String indexPath = '/' + clusterName + '/' + datasetName + "/configuration/index";
+            String nodesPath = '/' + clusterName + '/' + datasetName + "/configuration/nodes";
 
             ZKUtils.createIfNotExists(zk, paramsPath);
             ZKUtils.createIfNotExists(zk, indexPath);
@@ -111,7 +114,7 @@ public class ZKClusterDBService implements ClusterDBService {
         }
     }
 
-    public List<Region> loadRegions() {
+    public List<Region> loadRegions(String datasetName) {
         return null;
     }
 

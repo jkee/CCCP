@@ -7,9 +7,9 @@ import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.Before;
 import org.junit.Test;
-import ru.yandex.clickhouse.cccp.api.ClusterService;
-import ru.yandex.clickhouse.cccp.cluster.Cluster;
-import ru.yandex.clickhouse.cccp.cluster.ClusterConfiguration;
+import ru.yandex.clickhouse.cccp.api.DatasetService;
+import ru.yandex.clickhouse.cccp.cluster.Dataset;
+import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexTypes;
@@ -21,10 +21,11 @@ import java.util.List;
 /**
  * Created by jkee on 06/11/16.
  */
-public class ClusterTest {
+public class DatasetTest {
 
     ClusterClient clusterClient;
-    ClusterService service;
+
+    String datasetName = "testdataset";
 
     ZooKeeper zk;
 
@@ -38,8 +39,9 @@ public class ClusterTest {
             ZKUtil.deleteRecursive(zk, "/testcluster");
         }
 
-        ClusterConfiguration configuration = new ClusterConfiguration();
+        DatasetConfiguration configuration = new DatasetConfiguration();
         configuration.setClusterName("testcluster");
+        configuration.setDatasetName(datasetName);
         configuration.setReplicationFactor(1);
         configuration.setMaxTabletSize(100 * 1024); // 100 gb
         configuration.setNodes(Sets.newHashSet(
@@ -56,13 +58,13 @@ public class ClusterTest {
 
         clusterDBService.setConfiguration(configuration);
 
-        Cluster cluster = new Cluster();
-        cluster.setClusterDBService(clusterDBService);
+        Dataset dataset = new Dataset();
+        dataset.setClusterDBService(clusterDBService);
 
-        cluster.initFromService();
+        dataset.initFromService(datasetName);
 
-        clusterClient = new ClusterClient("jkee.org", 2181, cluster);
-        clusterClient.dataset = "testcluster";
+        clusterClient = new ClusterClient("jkee.org", 2181, dataset);
+        clusterClient.dataset = datasetName;
         clusterClient.table = "hits";
 
     }
