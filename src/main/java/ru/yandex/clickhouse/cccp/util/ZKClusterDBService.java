@@ -99,8 +99,8 @@ public class ZKClusterDBService implements ClusterDBService {
     @Override
     public DatasetConfiguration loadConfiguration(String datasetName) {
 
-        String paramsPath = '/' + clusterName + '/' + datasetName + "/configuration/parameters";
-        String indexPath = '/' + clusterName + '/' + datasetName + "/configuration/index";
+        String paramsPath = '/' + clusterName + "/datasets/" + datasetName + "/parameters";
+        String indexPath = '/' + clusterName + "/datasets/" + datasetName + "/index";
 
         DatasetConfiguration configuration = new DatasetConfiguration();
         configuration.setClusterName(clusterName);
@@ -129,15 +129,16 @@ public class ZKClusterDBService implements ClusterDBService {
         Preconditions.checkArgument(configuration.getClusterName().equals(clusterName), "Cluster name mismatch");
         try {
             String datasetName = configuration.getDatasetName();
-            ZKUtils.createIfNotExists(zk, '/' + clusterName);
-            ZKUtils.createIfNotExists(zk, '/' + clusterName + '/' + datasetName);
-            ZKUtils.createIfNotExists(zk, '/' + clusterName + '/' + datasetName + "/configuration");
 
-            String paramsPath = '/' + clusterName + '/' + datasetName + "/configuration/parameters";
-            String indexPath = '/' + clusterName + '/' + datasetName + "/configuration/index";
+            ZKUtils.createIfNotExists(zk, '/' + clusterName + "/datasets/" + datasetName);
+
+            String paramsPath = '/' + clusterName + "/datasets/" + datasetName + "/parameters";
+            String indexPath = '/' + clusterName + "/datasets/" + datasetName + "/index";
+            String tablesPath = '/' + clusterName + "/datasets/" + datasetName + "/tables";
 
             ZKUtils.createIfNotExists(zk, paramsPath);
             ZKUtils.createIfNotExists(zk, indexPath);
+            ZKUtils.createIfNotExists(zk, tablesPath);
 
             ZKUtils.createIfNotExists(zk, paramsPath + "/replicationFactor");
             ZKUtils.createIfNotExists(zk, paramsPath + "/maxTabletSize");

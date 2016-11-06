@@ -89,6 +89,8 @@ public class ZKDatasetDBServiceTest {
     @Test
     public void saveAndLoad() throws Exception {
 
+        clusterDBService.initCluster();
+
         DatasetConfiguration configuration = new DatasetConfiguration();
         configuration.setClusterName(clusterName);
         configuration.setDatasetName(datasetName);
