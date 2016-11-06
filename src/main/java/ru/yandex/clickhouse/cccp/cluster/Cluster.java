@@ -5,7 +5,6 @@ import com.google.common.collect.Sets;
 import ru.yandex.clickhouse.cccp.api.ClusterService;
 import ru.yandex.clickhouse.cccp.api.DatasetService;
 import ru.yandex.clickhouse.cccp.util.ClusterDBService;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,10 +30,18 @@ public class Cluster implements ClusterService {
         this.dbService = dbService;
     }
 
-    public void initFromDB(String clusterName) {
-        // load cluster info, basically it's host list
-
-        // todo should also load datasets
+    public void init() {
+        // load cluster info
+        dbService.initCluster();
+        nodes = dbService.getNodes();
+        // load datasets
+        Set<String> datasetNames = dbService.getDatasets();
+        for (String datasetName : datasetNames) {
+            Dataset dataset = new Dataset();
+            dataset.setClusterDBService(dbService);
+            dataset.initFromService(datasetName);
+            datasets.put(datasetName, dataset);
+        }
     }
 
     @Override
@@ -51,14 +58,27 @@ public class Cluster implements ClusterService {
     }
 
     @Override
-    public DatasetService createDataset(String datasetName, DatasetConfiguration configuration) {
-        // todo
-        throw new NotImplementedException();
+    public DatasetService createDataset(DatasetConfiguration configuration) {
+        if (datasets.containsKey(configuration.getDatasetName())) {
+            throw new IllegalArgumentException("Dataset already exists: " + configuration.getDatasetName());
+        }
+        dbService.setConfiguration(configuration);
+
+        Dataset dataset = new Dataset();
+        dataset.setClusterDBService(dbService);
+        dataset.initFromService(configuration.getDatasetName());
+
+        datasets.put(configuration.getDatasetName(), dataset);
+        return dataset;
     }
 
     @Override
     public void addNode(String host, String datacenter) {
         ClusterNode node = new ClusterNode(datacenter, host);
-        throw new NotImplementedException();
+        if (nodes.contains(node)) {
+            throw new IllegalArgumentException("Cluster already contains node: " + host);
+        }
+        nodes.add(node);
+        dbService.saveNodes(nodes);
     }
 }

@@ -10,12 +10,13 @@ public interface ClusterService {
 
     String getName();
 
+    void init();
 
     // DATASET API
 
     DatasetService getDataset(String datasetName);
 
-    DatasetService createDataset(String datasetName, DatasetConfiguration configuration);
+    DatasetService createDataset(DatasetConfiguration configuration);
 
     // NODES API
 

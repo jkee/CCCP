@@ -48,5 +48,5 @@ regionid -> long
 client should not build table name
 
 lower, upper -> left, right
-
+maxtabletsize -> maxtabletsizemb
 

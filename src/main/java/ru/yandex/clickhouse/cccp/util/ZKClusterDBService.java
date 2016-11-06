@@ -3,6 +3,7 @@ package ru.yandex.clickhouse.cccp.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Transaction;
@@ -55,7 +56,7 @@ public class ZKClusterDBService implements ClusterDBService {
                 transaction.create('/' + clusterName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 transaction.create('/' + clusterName + "/parameters", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 transaction.create('/' + clusterName + "/datasets", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                transaction.create('/' + clusterName + "/nodes", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                transaction.create('/' + clusterName + "/nodes", "[]".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
                 transaction.commit();
                 logger.info("Cluster initialized: " + clusterName);
@@ -77,9 +78,9 @@ public class ZKClusterDBService implements ClusterDBService {
     }
 
     @Override
-    public List<String> getDatasets() {
+    public Set<String> getDatasets() {
         try {
-            return zk.getChildren('/' + clusterName + "/datasets", false);
+            return Sets.newHashSet(zk.getChildren('/' + clusterName + "/datasets", false));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -77,6 +77,11 @@ public class Dataset implements DatasetService {
     }
 
     @Override
+    public String getName() {
+        return configuration.getDatasetName();
+    }
+
+    @Override
     public IndexConfig getIndexConfig() {
         return configuration.getConfig();
     }

@@ -21,7 +21,7 @@ public interface ClusterDBService {
 
     Set<ClusterNode> getNodes();
 
-    List<String> getDatasets();
+    Set<String> getDatasets();
 
     // Dataset level
 

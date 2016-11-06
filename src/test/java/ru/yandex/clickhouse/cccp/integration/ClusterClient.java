@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.zookeeper.ZooKeeper;
+import ru.yandex.clickhouse.cccp.api.ClusterService;
 import ru.yandex.clickhouse.cccp.api.DatasetService;
 import ru.yandex.clickhouse.cccp.cluster.Region;
 import ru.yandex.clickhouse.cccp.index.IndexRange;
@@ -46,6 +47,7 @@ import java.util.Random;
 public class ClusterClient {
 
     private ZooKeeper zk;
+    private ClusterService clusterService;
     private DatasetService datasetService;
 
     String dataset;

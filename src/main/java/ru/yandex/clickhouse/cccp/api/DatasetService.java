@@ -10,6 +10,8 @@ import java.util.List;
  */
 public interface DatasetService {
 
+    String getName();
+
     // list of regions
     List<Region> getRegions();
 
