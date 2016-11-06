@@ -18,9 +18,6 @@ public class DatasetConfiguration {
     // only Metrica cluster configuration for now
     // simplified for one layer
 
-    // all servers
-    private Set<ClusterNode> nodes;
-
     // index
     private IndexConfig config;
 
@@ -45,14 +42,6 @@ public class DatasetConfiguration {
 
     public void setDatasetName(String datasetName) {
         this.datasetName = datasetName;
-    }
-
-    public Set<ClusterNode> getNodes() {
-        return nodes;
-    }
-
-    public void setNodes(Set<ClusterNode> nodes) {
-        this.nodes = nodes;
     }
 
     public int getReplicationFactor() {

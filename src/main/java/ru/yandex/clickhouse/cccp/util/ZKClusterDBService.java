@@ -3,10 +3,13 @@ package ru.yandex.clickhouse.cccp.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.Transaction;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
+import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.Region;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexType;
@@ -22,6 +25,8 @@ import java.util.stream.Collectors;
  * Created by Jkee on 29.10.2016.
  */
 public class ZKClusterDBService implements ClusterDBService {
+
+    static final Logger logger = Logger.getLogger(ZKClusterDBService.class);
 
     private ZooKeeper zk;
 
@@ -41,11 +46,61 @@ public class ZKClusterDBService implements ClusterDBService {
     }
 
     @Override
+    public void initCluster() {
+        try {
+            if (zk.exists('/' + clusterName, false) == null) {
+                // Create cluster node and other children
+                Transaction transaction = zk.transaction();
+
+                transaction.create('/' + clusterName, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                transaction.create('/' + clusterName + "/parameters", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                transaction.create('/' + clusterName + "/datasets", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                transaction.create('/' + clusterName + "/nodes", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+                transaction.commit();
+                logger.info("Cluster initialized: " + clusterName);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Set<ClusterNode> getNodes() {
+        String nodesPath = '/' + clusterName + "/nodes";
+        try {
+            byte[] nodesJson = zk.getData(nodesPath, false, null);
+            return mapper.readValue(nodesJson, new TypeReference<Set<ClusterNode>>() { });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<String> getDatasets() {
+        try {
+            return zk.getChildren('/' + clusterName + "/datasets", false);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void saveNodes(Set<ClusterNode> nodes) {
+        String nodesPath = '/' + clusterName + "/nodes";
+        try {
+            byte[] nodesJson = mapper.writeValueAsBytes(nodes);
+            zk.setData(nodesPath, nodesJson, -1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public DatasetConfiguration loadConfiguration(String datasetName) {
 
         String paramsPath = '/' + clusterName + '/' + datasetName + "/configuration/parameters";
         String indexPath = '/' + clusterName + '/' + datasetName + "/configuration/index";
-        String nodesPath = '/' + clusterName + '/' + datasetName + "/configuration/nodes";
 
         DatasetConfiguration configuration = new DatasetConfiguration();
         configuration.setClusterName(clusterName);
@@ -57,10 +112,6 @@ public class ZKClusterDBService implements ClusterDBService {
 
             byte[] maxTabletSizeBytes = zk.getData(paramsPath + "/maxTabletSize", false, null);
             configuration.setMaxTabletSize(Integer.valueOf(new String(maxTabletSizeBytes)));
-
-            byte[] nodesJson = zk.getData(nodesPath, false, null);
-            Set<ClusterNode> nodes = mapper.readValue(nodesJson, new TypeReference<Set<ClusterNode>>() { });
-            configuration.setNodes(nodes);
 
             byte[] typesJson = zk.getData(indexPath, false, null);
             List<String> typesString = mapper.readValue(typesJson, new TypeReference<List<String>>() {});
@@ -84,16 +135,13 @@ public class ZKClusterDBService implements ClusterDBService {
 
             String paramsPath = '/' + clusterName + '/' + datasetName + "/configuration/parameters";
             String indexPath = '/' + clusterName + '/' + datasetName + "/configuration/index";
-            String nodesPath = '/' + clusterName + '/' + datasetName + "/configuration/nodes";
 
             ZKUtils.createIfNotExists(zk, paramsPath);
             ZKUtils.createIfNotExists(zk, indexPath);
-            ZKUtils.createIfNotExists(zk, nodesPath);
 
             ZKUtils.createIfNotExists(zk, paramsPath + "/replicationFactor");
             ZKUtils.createIfNotExists(zk, paramsPath + "/maxTabletSize");
 
-            byte[] nodesJson = mapper.writeValueAsBytes(configuration.getNodes());
             List<String> types = configuration.getConfig().getTypes().stream()
                     .map(IndexType::getID)
                     .collect(Collectors.toList());
@@ -105,7 +153,6 @@ public class ZKClusterDBService implements ClusterDBService {
             transaction.setData(paramsPath + "/maxTabletSize", String.valueOf(configuration.getMaxTabletSize()).getBytes(), -1);
 
             transaction.setData(indexPath, typesJson, -1);
-            transaction.setData(nodesPath, nodesJson, -1);
 
             transaction.commit();
 

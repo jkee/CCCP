@@ -4,6 +4,7 @@
 
 All cluster info is stored under cluster_name prefix.
 There are:
+
 * Nodes (hardware)
 * Datasets
 * Cluster-level parameters
@@ -19,9 +20,13 @@ zookeeper_root
             *node_host
 ```
             
+            
+Cluster-level parameters list is empty for now.
+            
 ### Dataset
                         
 Dataset information is stored under dataset name.
+
 * Dataset index
 * Tables
 * Dataset-level parameters
@@ -35,6 +40,11 @@ dataset_name
     tables
         *table_name
 ```
+ 
+Dataset-level parameters
+
+* `replication_factor` - How many times data is copied on cluster
+* `max_region_size_mb` - Desired maximum region size in megabytes. Maximum isn't guaranteed.
  
 ### Host
 

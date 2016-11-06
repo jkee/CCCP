@@ -1,15 +1,29 @@
 package ru.yandex.clickhouse.cccp.util;
 
+import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.Region;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Storage for metadata
  * Created by Jkee on 29.10.2016.
  */
 public interface ClusterDBService {
+
+    // Cluster level
+
+    void initCluster();
+
+    void saveNodes(Set<ClusterNode> nodes);
+
+    Set<ClusterNode> getNodes();
+
+    List<String> getDatasets();
+
+    // Dataset level
 
     /**
      * Set configuration

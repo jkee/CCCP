@@ -1,16 +1,13 @@
 package ru.yandex.clickhouse.cccp.integration;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.Before;
 import org.junit.Test;
-import ru.yandex.clickhouse.cccp.api.DatasetService;
 import ru.yandex.clickhouse.cccp.cluster.Dataset;
 import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
-import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexTypes;
 import ru.yandex.clickhouse.cccp.util.ZKClusterDBService;
@@ -44,9 +41,9 @@ public class DatasetTest {
         configuration.setDatasetName(datasetName);
         configuration.setReplicationFactor(1);
         configuration.setMaxTabletSize(100 * 1024); // 100 gb
-        configuration.setNodes(Sets.newHashSet(
+        /*configuration.setNodes(Sets.newHashSet(
                 new ClusterNode("jkee.org", "jkee01")
-        ));
+        ));*/
         IndexConfig config = new IndexConfig(Lists.newArrayList(
                 IndexTypes.MONTH,
                 IndexTypes.UInt32,
