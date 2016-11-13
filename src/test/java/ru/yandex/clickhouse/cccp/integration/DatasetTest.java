@@ -6,7 +6,8 @@ import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.Before;
 import org.junit.Test;
-import ru.yandex.clickhouse.cccp.cluster.Dataset;
+import ru.yandex.clickhouse.cccp.api.DatasetService;
+import ru.yandex.clickhouse.cccp.cluster.Cluster;
 import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexTypes;
@@ -22,6 +23,7 @@ public class DatasetTest {
 
     ClusterClient clusterClient;
 
+    String clusterName = "testcluster";
     String datasetName = "testdataset";
 
     ZooKeeper zk;
@@ -53,14 +55,12 @@ public class DatasetTest {
 
         ZKClusterDBService clusterDBService = new ZKClusterDBService("jkee.org", 2181, "testcluster");
 
-        clusterDBService.setConfiguration(configuration);
+        Cluster cluster = new Cluster(clusterName, clusterDBService);
+        cluster.init();
 
-        Dataset dataset = new Dataset();
-        dataset.setClusterDBService(clusterDBService);
+        DatasetService dataset = cluster.createDataset(configuration);
 
-        dataset.initFromService(datasetName);
-
-        clusterClient = new ClusterClient("jkee.org", 2181, dataset);
+        clusterClient = new ClusterClient("jkee.org", 2181, cluster, dataset);
         clusterClient.dataset = datasetName;
         clusterClient.table = "hits";
 

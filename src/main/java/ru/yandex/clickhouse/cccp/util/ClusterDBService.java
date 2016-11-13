@@ -3,6 +3,7 @@ package ru.yandex.clickhouse.cccp.util;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.Region;
+import ru.yandex.clickhouse.cccp.index.IndexRange;
 
 import java.util.List;
 import java.util.Set;
@@ -44,10 +45,10 @@ public interface ClusterDBService {
      * Updates current region with new nodes info
      * Region index range can't be changed!
      */
-    void updateRegion(Region region);
+    void updateRegion(String datasetName, Region region);
 
-    void addRegion(Region region);
+    Region addRegion(String datasetName, List<ClusterNode> nodes, IndexRange indexRange);
 
-    void deleteRegion(Region region);
+    void deleteRegion(String datasetName, Region region);
 
 }

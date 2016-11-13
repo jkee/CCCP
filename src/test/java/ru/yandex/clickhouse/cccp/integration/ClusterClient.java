@@ -64,7 +64,10 @@ public class ClusterClient {
 
     private List<HitIndexRange> indexes = Lists.newArrayList();
 
-    public ClusterClient(String host, int port, DatasetService datasetService) {
+    public ClusterClient(String host, int port,
+                         ClusterService clusterService,
+                         DatasetService datasetService) {
+        this.clusterService = clusterService;
         this.datasetService = datasetService;
         try {
             // no listener for now

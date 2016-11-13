@@ -2,6 +2,8 @@ package ru.yandex.clickhouse.cccp.cluster;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.primitives.UnsignedLongs;
 import ru.yandex.clickhouse.cccp.api.DatasetService;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
@@ -9,9 +11,7 @@ import ru.yandex.clickhouse.cccp.index.IndexRange;
 import ru.yandex.clickhouse.cccp.index.IndexType;
 import ru.yandex.clickhouse.cccp.util.ClusterDBService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -20,11 +20,15 @@ import java.util.stream.Collectors;
  */
 public class Dataset implements DatasetService {
 
+    private Cluster cluster;
+
     private DatasetConfiguration configuration;
 
     private ClusterDBService clusterDBService;
 
     private List<Region> regions;
+
+    private Random random = new Random(System.currentTimeMillis());
 
     /*
     * Index is presented as a tree of bounds
@@ -57,7 +61,6 @@ public class Dataset implements DatasetService {
         regions = clusterDBService.loadRegions(configuration.getDatasetName());
         if (regions == null || regions.isEmpty()) {
             // handle new regions right
-            // actually one of the most important parts
             List<IndexType<?>> types = configuration.getConfig().getTypes();
             int size = types.size();
             long[] upper = new long[size];
@@ -66,14 +69,42 @@ public class Dataset implements DatasetService {
                 upper[i] = types.get(i).minValue();
                 lower[i] = types.get(i).maxValue();
             }
-            IndexRange range = new IndexRange(upper, lower);
-            Region region = new Region(1,
-                    Lists.newArrayList(new ClusterNode("jkee", "jkee.org")),
-                    range);
-            regions = Lists.newArrayList();
-            regions.add(region);
+            addRegion(upper, lower);
         }
-        buildIndex();
+        rebuildIndex();
+    }
+
+    private void addRegion(long[] upper, long[] lower) {
+        IndexRange range = new IndexRange(upper, lower);
+        List<ClusterNode> choosedNodes = chooseNodes();
+        Region region = new Region(
+                1,
+                choosedNodes,
+                range);
+        regions = Lists.newArrayList();
+        regions.add(region);
+    }
+
+    private List<ClusterNode> chooseNodes() {
+        List<ClusterNode> choosedNodes = Lists.newArrayList();
+        // choosing random <replication_factor> nodes from different datacenters
+        // todo add different policies
+        // todo prioritize less loaded nodes
+        // todo some cool node-choosing algorithm
+        Multimap<String, ClusterNode> byDC = Multimaps.index(cluster.getNodes(), ClusterNode::getDatacenter);
+        int replicationFactor = configuration.getReplicationFactor();
+        if (replicationFactor > byDC.size()) {
+            throw new IllegalStateException("Not enough DCs for replication factor: " + replicationFactor);
+        }
+        List<String> dcs = Lists.newArrayList(byDC.keySet());
+        Collections.shuffle(dcs, random);
+        for (int i = 0; i < replicationFactor; i++) {
+            String dc = dcs.get(i);
+            List<ClusterNode> dcNodes = Lists.newArrayList(byDC.get(dc));
+            ClusterNode node = dcNodes.get(random.nextInt(dcNodes.size()));
+            choosedNodes.add(node);
+        }
+        return choosedNodes;
     }
 
     @Override
@@ -121,7 +152,7 @@ public class Dataset implements DatasetService {
         return floorRegion.getValue();
     }
 
-    private void buildIndex() {
+    private void rebuildIndex() {
         TreeMap<IndexBound, Region> newIndex = new TreeMap<>();
         for (Region region : regions) {
             newIndex.put(
@@ -130,6 +161,10 @@ public class Dataset implements DatasetService {
             );
         }
         regionIndex = newIndex;
+    }
+
+    public void setCluster(Cluster cluster) {
+        this.cluster = cluster;
     }
 
     public DatasetConfiguration getConfiguration() {

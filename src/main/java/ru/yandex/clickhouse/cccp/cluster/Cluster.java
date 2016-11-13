@@ -37,11 +37,17 @@ public class Cluster implements ClusterService {
         // load datasets
         Set<String> datasetNames = dbService.getDatasets();
         for (String datasetName : datasetNames) {
-            Dataset dataset = new Dataset();
-            dataset.setClusterDBService(dbService);
-            dataset.initFromService(datasetName);
+            Dataset dataset = createDataset(datasetName);
             datasets.put(datasetName, dataset);
         }
+    }
+
+    private Dataset createDataset(String datasetName) {
+        Dataset dataset = new Dataset();
+        dataset.setCluster(this);
+        dataset.setClusterDBService(dbService);
+        dataset.initFromService(datasetName);
+        return dataset;
     }
 
     @Override
@@ -64,9 +70,7 @@ public class Cluster implements ClusterService {
         }
         dbService.setConfiguration(configuration);
 
-        Dataset dataset = new Dataset();
-        dataset.setClusterDBService(dbService);
-        dataset.initFromService(configuration.getDatasetName());
+        Dataset dataset = createDataset(configuration.getDatasetName());
 
         datasets.put(configuration.getDatasetName(), dataset);
         return dataset;
@@ -81,4 +85,9 @@ public class Cluster implements ClusterService {
         nodes.add(node);
         dbService.saveNodes(nodes);
     }
+
+    Set<ClusterNode> getNodes() {
+        return nodes;
+    }
+
 }

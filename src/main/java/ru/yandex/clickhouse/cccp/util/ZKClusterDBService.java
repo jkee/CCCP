@@ -13,6 +13,7 @@ import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.Region;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
+import ru.yandex.clickhouse.cccp.index.IndexRange;
 import ru.yandex.clickhouse.cccp.index.IndexType;
 import ru.yandex.clickhouse.cccp.index.IndexTypes;
 
@@ -108,10 +109,10 @@ public class ZKClusterDBService implements ClusterDBService {
         configuration.setDatasetName(datasetName);
 
         try {
-            byte[] replicationFactorBytes = zk.getData(paramsPath + "/replicationFactor", false, null);
+            byte[] replicationFactorBytes = zk.getData(paramsPath + "/replication_factor", false, null);
             configuration.setReplicationFactor(Integer.valueOf(new String(replicationFactorBytes)));
 
-            byte[] maxTabletSizeBytes = zk.getData(paramsPath + "/maxTabletSize", false, null);
+            byte[] maxTabletSizeBytes = zk.getData(paramsPath + "/max_tablet_size", false, null);
             configuration.setMaxTabletSize(Integer.valueOf(new String(maxTabletSizeBytes)));
 
             byte[] typesJson = zk.getData(indexPath, false, null);
@@ -141,8 +142,8 @@ public class ZKClusterDBService implements ClusterDBService {
             ZKUtils.createIfNotExists(zk, indexPath);
             ZKUtils.createIfNotExists(zk, tablesPath);
 
-            ZKUtils.createIfNotExists(zk, paramsPath + "/replicationFactor");
-            ZKUtils.createIfNotExists(zk, paramsPath + "/maxTabletSize");
+            ZKUtils.createIfNotExists(zk, paramsPath + "/replication_factor");
+            ZKUtils.createIfNotExists(zk, paramsPath + "/max_tablet_size");
 
             List<String> types = configuration.getConfig().getTypes().stream()
                     .map(IndexType::getID)
@@ -151,8 +152,8 @@ public class ZKClusterDBService implements ClusterDBService {
 
             Transaction transaction = zk.transaction();
 
-            transaction.setData(paramsPath + "/replicationFactor", String.valueOf(configuration.getReplicationFactor()).getBytes(), -1);
-            transaction.setData(paramsPath + "/maxTabletSize", String.valueOf(configuration.getMaxTabletSize()).getBytes(), -1);
+            transaction.setData(paramsPath + "/replication_factor", String.valueOf(configuration.getReplicationFactor()).getBytes(), -1);
+            transaction.setData(paramsPath + "/max_tablet_size", String.valueOf(configuration.getMaxTabletSize()).getBytes(), -1);
 
             transaction.setData(indexPath, typesJson, -1);
 
@@ -163,17 +164,78 @@ public class ZKClusterDBService implements ClusterDBService {
         }
     }
 
+
+    /*
+    *
+    regions
+        *region_<incremental_num>
+            left_bound
+            right_bound
+            nodes
+                *node_host
+    *
+    * */
     public List<Region> loadRegions(String datasetName) {
+
         return null;
     }
 
-    public void updateRegion(Region region) {
+    public void updateRegion(String datasetName, Region region) {
     }
 
-    public void addRegion(Region region) {
+
+    public Region addRegion(String datasetName, List<ClusterNode> nodes, IndexRange indexRange) {
+
+        String regionPath = '/' + clusterName + "/datasets/" + datasetName + "/regions/region_";
+
+        RegionContent content = new RegionContent();
+        content.setLeftBound(indexRange.getUpperBounds());
+        content.setRightBound(indexRange.getLowerBounds());
+        content.setNodes(nodes);
+
+        try {
+            byte[] regionContentJson = mapper.writeValueAsBytes(content);
+            // get new sequential number
+            String newRegionName = zk.create(regionPath, regionContentJson, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            int id = Integer.parseInt(newRegionName.replace("region_", ""));
+            return new Region(id, nodes, indexRange);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void deleteRegion(Region region) {
+    public void deleteRegion(String datasetName, Region region) {
+    }
+
+
+    static class RegionContent {
+        long[] leftBound;
+        long[] rightBound;
+        List<ClusterNode> nodes;
+
+        public long[] getLeftBound() {
+            return leftBound;
+        }
+
+        public void setLeftBound(long[] leftBound) {
+            this.leftBound = leftBound;
+        }
+
+        public long[] getRightBound() {
+            return rightBound;
+        }
+
+        public void setRightBound(long[] rightBound) {
+            this.rightBound = rightBound;
+        }
+
+        public List<ClusterNode> getNodes() {
+            return nodes;
+        }
+
+        public void setNodes(List<ClusterNode> nodes) {
+            this.nodes = nodes;
+        }
     }
 
 }

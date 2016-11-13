@@ -2,8 +2,6 @@ package ru.yandex.clickhouse.cccp.cluster;
 
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 
-import java.util.Set;
-
 /**
  * Hardware configuration and parameters
  * Created by Jkee on 29.10.2016.
@@ -26,7 +24,6 @@ public class DatasetConfiguration {
 
     // max desired tablet size in mbytes
     private long maxTabletSize;
-
 
     public String getClusterName() {
         return clusterName;

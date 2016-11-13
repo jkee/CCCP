@@ -39,6 +39,8 @@ dataset_name
     index -> index_json
     tables
         *table_name
+    regions
+        *region_<incremental_num> -> value
 ```
  
 Dataset-level parameters
