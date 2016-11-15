@@ -7,8 +7,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import ru.yandex.clickhouse.cccp.dataset.Dataset;
-import ru.yandex.clickhouse.cccp.dataset.Table;
+import ru.yandex.clickhouse.cccp.dataset.DatasetMeta;
+import ru.yandex.clickhouse.cccp.dataset.TableMeta;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexTypes;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
@@ -29,8 +29,8 @@ public class CHNodeConnectionTest {
 
     CHNodeConnection connection;
     private IndexConfig config;
-    private Table table;
-    private Dataset dataset;
+    private TableMeta table;
+    private DatasetMeta dataset;
 
     private Connection dbConnection;
 
@@ -48,8 +48,8 @@ public class CHNodeConnectionTest {
                 IndexTypes.MONTH, IndexTypes.UInt64
         ));
 
-        table = new Table("hits", 0,
-                "CREATE TABLE IF NOT EXISTS " + Table.TABLE_PLACEHOLDER +
+        table = new TableMeta("hits", 0,
+                "CREATE TABLE IF NOT EXISTS " + TableMeta.TABLE_PLACEHOLDER +
                         "(" +
                         "    EventDate Date," +
                         "    UserID UInt64," +
@@ -57,7 +57,7 @@ public class CHNodeConnectionTest {
                         ") ENGINE = MergeTree(EventDate, intHash32(UserID), (EventDate, intHash32(UserID)), 8192)"
         );
 
-        dataset = new Dataset("testdataset", config, Lists.newArrayList(table));
+        dataset = new DatasetMeta("testdataset", config, Lists.newArrayList(table));
 
 
         dbConnection.createStatement().execute("drop database if exists testdataset");

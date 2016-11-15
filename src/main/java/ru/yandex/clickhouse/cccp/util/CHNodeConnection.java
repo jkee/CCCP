@@ -1,8 +1,8 @@
 package ru.yandex.clickhouse.cccp.util;
 
 import ru.yandex.clickhouse.ClickHouseDataSource;
-import ru.yandex.clickhouse.cccp.dataset.Dataset;
-import ru.yandex.clickhouse.cccp.dataset.Table;
+import ru.yandex.clickhouse.cccp.dataset.DatasetMeta;
+import ru.yandex.clickhouse.cccp.dataset.TableMeta;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
 
 import java.sql.Connection;
@@ -43,7 +43,7 @@ public class CHNodeConnection {
         }
     }
 
-    public void createDataset(Dataset dataset) {
+    public void createDataset(DatasetMeta dataset) {
         try {
             // hope nobody will sqlinject this shit
             // can't escape table name with jdbc things
@@ -54,12 +54,12 @@ public class CHNodeConnection {
         }
     }
 
-    public void createTables(Dataset dataset, int regionID) {
+    public void createTables(DatasetMeta dataset, int regionID) {
         try {
-            for (Table table : dataset.getTables()) {
+            for (TableMeta table : dataset.getTables()) {
                 String tableName = dataset.getName() + '.' + table.getName() + '_' + regionID;
 
-                String sql = table.getCreateStatement().replace(Table.TABLE_PLACEHOLDER, tableName);
+                String sql = table.getCreateStatement().replace(TableMeta.TABLE_PLACEHOLDER, tableName);
 
                 Statement statement = connection.createStatement();
                 statement.execute(sql);

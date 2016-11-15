@@ -1,6 +1,7 @@
 package ru.yandex.clickhouse.cccp.api;
 
 import ru.yandex.clickhouse.cccp.cluster.Region;
+import ru.yandex.clickhouse.cccp.dataset.TableMeta;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 
 import java.util.List;
@@ -24,6 +25,11 @@ public interface DatasetService {
     // hosts for regionID
     // todo should not be here, take it from ZK and subscribe as writer
     List<String> getHosts(int regionID);
+
+
+    void createTable(TableMeta tableMeta);
+
+    List<TableMeta> getTables();
 
 
 }

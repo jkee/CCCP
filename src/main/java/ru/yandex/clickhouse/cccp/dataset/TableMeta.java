@@ -11,7 +11,7 @@ package ru.yandex.clickhouse.cccp.dataset;
  *
  * Created by Jkee on 05.11.2016.
  */
-public class Table {
+public class TableMeta {
 
     public static final String TABLE_PLACEHOLDER = "%table_name%";
 
@@ -23,7 +23,7 @@ public class Table {
      */
     private String createStatement;
 
-    public Table(String name, int version, String createStatement) {
+    public TableMeta(String name, int version, String createStatement) {
         if (name.contains(";")) {
             throw new IllegalArgumentException("Don't try to hijack me boy");
         }

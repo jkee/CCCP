@@ -57,8 +57,11 @@ node_host -> node_dc
        
 ### Table
 
-TODO table
+Table information: everything required to handle tables.
+Version will be required later for alters and other DDL.
 ```
 table_name
+    version -> value
+    create_statement -> value
     
 ```  

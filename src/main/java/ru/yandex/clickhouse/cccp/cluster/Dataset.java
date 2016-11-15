@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.primitives.UnsignedLongs;
 import ru.yandex.clickhouse.cccp.api.DatasetService;
+import ru.yandex.clickhouse.cccp.dataset.TableMeta;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexRange;
 import ru.yandex.clickhouse.cccp.index.IndexType;
@@ -29,6 +30,8 @@ public class Dataset implements DatasetService {
     private List<Region> regions;
 
     private Random random = new Random(System.currentTimeMillis());
+
+    private List<TableMeta> tables;
 
     /*
     * Index is presented as a tree of bounds
@@ -150,6 +153,18 @@ public class Dataset implements DatasetService {
             throw new IllegalStateException("That's not possible, floor region always should be in the index");
         }
         return floorRegion.getValue();
+    }
+
+    /// TABLE LEVEL
+
+    @Override
+    public void createTable(TableMeta tableMeta) {
+
+    }
+
+    @Override
+    public List<TableMeta> getTables() {
+        return null;
     }
 
     private void rebuildIndex() {

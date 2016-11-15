@@ -3,6 +3,7 @@ package ru.yandex.clickhouse.cccp.util;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.Region;
+import ru.yandex.clickhouse.cccp.dataset.TableMeta;
 import ru.yandex.clickhouse.cccp.index.IndexRange;
 
 import java.util.List;
@@ -50,5 +51,10 @@ public interface ClusterDBService {
     Region addRegion(String datasetName, List<ClusterNode> nodes, IndexRange indexRange);
 
     void deleteRegion(String datasetName, Region region);
+
+
+    List<TableMeta> loadTables(String datasetName);
+
+    void setTable(String datasetName, TableMeta tableMeta);
 
 }

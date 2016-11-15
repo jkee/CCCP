@@ -3,6 +3,7 @@ package ru.yandex.clickhouse.cccp.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -12,6 +13,7 @@ import org.apache.zookeeper.ZooKeeper;
 import ru.yandex.clickhouse.cccp.cluster.ClusterNode;
 import ru.yandex.clickhouse.cccp.cluster.DatasetConfiguration;
 import ru.yandex.clickhouse.cccp.cluster.Region;
+import ru.yandex.clickhouse.cccp.dataset.TableMeta;
 import ru.yandex.clickhouse.cccp.index.IndexConfig;
 import ru.yandex.clickhouse.cccp.index.IndexRange;
 import ru.yandex.clickhouse.cccp.index.IndexType;
@@ -207,6 +209,55 @@ public class ZKClusterDBService implements ClusterDBService {
     public void deleteRegion(String datasetName, Region region) {
     }
 
+    @Override
+    public List<TableMeta> loadTables(String datasetName) {
+        String tablesPath = '/' + clusterName + "/datasets/" + datasetName + "/tables";
+        try {
+            List<String> tables = zk.getChildren(tablesPath, false);
+            List<TableMeta> metas = Lists.newArrayList();
+            for (String table : tables) {
+                String tablePath = tablesPath + '/' + table;
+                int version = Integer.valueOf(new String(zk.getData(tablePath + '/' + "version", false, null)));
+                String create = new String(zk.getData(tablePath + '/' + "create", false, null));
+                TableMeta meta = new TableMeta(table, version, create);
+                metas.add(meta);
+            }
+            return metas;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void setTable(String datasetName, TableMeta tableMeta) {
+        String tablePath = '/' + clusterName + "/datasets/" + datasetName + "/tables/" + tableMeta.getName();
+        try {
+            if (zk.exists(tablePath, false) == null) {
+                createTable(datasetName, tableMeta);
+            } else {
+                Transaction transaction = zk.transaction();
+                transaction.setData(tablePath, null, -1);
+                transaction.setData(tablePath + "/version", String.valueOf(tableMeta.getVersion()).getBytes(), -1);
+                transaction.setData(tablePath + "/create", tableMeta.getCreateStatement().getBytes(), -1);
+                transaction.commit();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void createTable(String datasetName, TableMeta tableMeta) {
+        String tablePath = '/' + clusterName + "/datasets/" + datasetName + "/tables/" + tableMeta.getName();
+        try {
+            Transaction transaction = zk.transaction();
+            transaction.create(tablePath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            transaction.create(tablePath + "/version", String.valueOf(tableMeta.getVersion()).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            transaction.create(tablePath + "/create", tableMeta.getCreateStatement().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            transaction.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     static class RegionContent {
         long[] leftBound;
